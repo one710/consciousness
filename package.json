@@ -1,0 +1,38 @@
+{
+  "name": "@one710/consciousness",
+  "version": "1.0.0",
+  "description": "A powerful, pluggable vector memory and MCP server for semantic search.",
+  "license": "MIT",
+  "author": "Vaibhav Pandey <contact@vaibhavpandey.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/one710/consciousness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/one710/consciousness/issues"
+  },
+  "homepage": "https://github.com/one710/consciousness#readme",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "mocha --node-option import=tsx test/**/*.test.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "ai": "^6.0.94",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.3.0",
+    "chai": "^6.2.2",
+    "chromadb": "^3.3.1",
+    "mocha": "^11.7.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "yarn@1.22.22"
+}
