@@ -14,8 +14,12 @@
   "homepage": "https://github.com/one710/consciousness#readme",
   "type": "module",
   "main": "dist/lib.js",
+  "types": "dist/lib.d.ts",
   "exports": {
-    ".": "./dist/lib.js"
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.js"
+    }
   },
   "bin": {
     "consciousness": "dist/index.js"
