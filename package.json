@@ -13,7 +13,13 @@
   },
   "homepage": "https://github.com/one710/consciousness#readme",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/lib.js",
+  "exports": {
+    ".": "./dist/lib.js"
+  },
+  "bin": {
+    "consciousness": "dist/index.js"
+  },
   "scripts": {
     "test": "mocha --node-option import=tsx test/**/*.test.ts",
     "build": "tsc"
