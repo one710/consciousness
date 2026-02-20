@@ -1,6 +1,6 @@
 {
   "name": "@one710/consciousness",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A powerful, pluggable vector memory and MCP server for semantic search.",
   "license": "MIT",
   "author": "Vaibhav Pandey <contact@vaibhavpandey.com>",
