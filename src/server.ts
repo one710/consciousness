@@ -15,6 +15,9 @@ export function createServer(
     {
       description: "Store information in vector memory",
       inputSchema: {
+        sessionId: z
+          .string()
+          .describe("The session ID to scope this memory to"),
         content: z.string().describe("The text content to store"),
         metadata: z
           .record(z.string(), z.any())
@@ -22,9 +25,9 @@ export function createServer(
           .describe("Optional metadata for the memory item"),
       },
     },
-    async ({ content, metadata }) => {
+    async ({ sessionId, content, metadata }) => {
       await vectorStore.initialize?.();
-      const item = await vectorStore.add(content, metadata);
+      const item = await vectorStore.add(sessionId, content, metadata);
       return {
         content: [
           {
@@ -42,6 +45,7 @@ export function createServer(
       description:
         "Retrieve information from vector memory using similarity or DTS search",
       inputSchema: {
+        sessionId: z.string().describe("The session ID to search within"),
         query: z.string().describe("The search query"),
         method: z
           .enum(["cosine", "euclidean", "dts"])
@@ -55,9 +59,12 @@ export function createServer(
           .describe("Maximum number of results to return"),
       },
     },
-    async ({ query, method, limit }) => {
+    async ({ sessionId, query, method, limit }) => {
       await vectorStore.initialize?.();
-      const results = await vectorStore.search(query, { method, limit });
+      const results = await vectorStore.search(sessionId, query, {
+        method,
+        limit,
+      });
 
       if (results.length === 0) {
         return {
@@ -84,11 +91,14 @@ export function createServer(
   server.registerTool(
     "clear_memory",
     {
-      description: "Clear all stored memories",
+      description: "Clear all stored memories for a session",
+      inputSchema: {
+        sessionId: z.string().describe("The session ID to clear memories for"),
+      },
     },
-    async () => {
+    async ({ sessionId }) => {
       await vectorStore.initialize?.();
-      await vectorStore.clear();
+      await vectorStore.clear(sessionId);
       return {
         content: [{ type: "text", text: "Memory store cleared successfully." }],
       };
@@ -100,12 +110,13 @@ export function createServer(
     {
       description: "Remove a specific memory item by its ID",
       inputSchema: {
+        sessionId: z.string().describe("The session ID the memory belongs to"),
         id: z.string().describe("The unique ID of the memory item to forget"),
       },
     },
-    async ({ id }) => {
+    async ({ sessionId, id }) => {
       await vectorStore.initialize?.();
-      await vectorStore.forget(id);
+      await vectorStore.forget(sessionId, id);
       return {
         content: [
           {

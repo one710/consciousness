@@ -10,8 +10,9 @@ A powerful, pluggable vector memory and Model Context Protocol (MCP) server for 
 ## Features
 
 - **MCP Integration**: Fully compatible with the Model Context Protocol.
+- **Session-Scoped Memory**: All operations require a `sessionId`, enabling isolated memory per session.
 - **Pluggable Architecture**: Easily swap embedding providers and vector stores.
-- **Embedded Local Storage**: Supports Filesystem and Memory stores out of the box.
+- **Multiple Storage Backends**: Supports Memory, Filesystem, and ChromaDB stores out of the box.
 - **Semantic Search**: Use state-of-the-art embeddings for intelligent memory retrieval.
 - **DTS Indexing**: Optimized search using Distance to Samples (DTS) logic.
 
@@ -100,6 +101,40 @@ import { ChromaClient } from "chromadb";
 const client = new ChromaClient();
 const store = new ChromaVectorStore(provider, client, "my-collection");
 ```
+
+### Working with Sessions
+
+All store operations require a `sessionId` to isolate memories:
+
+```typescript
+const sessionId = "user-123";
+
+// Store a memory
+await store.add(sessionId, "The capital of France is Paris");
+
+// Search within the session
+const results = await store.search(sessionId, "France", {
+  method: "cosine",
+  limit: 5,
+});
+
+// Forget a specific memory
+await store.forget(sessionId, results[0].item.id);
+
+// Clear all memories for the session
+await store.clear(sessionId);
+```
+
+### MCP Tools
+
+The MCP server exposes four tools, all requiring a `sessionId`:
+
+| Tool            | Description                                                                       |
+| --------------- | --------------------------------------------------------------------------------- |
+| `add_to_memory` | Store content with an optional metadata object                                    |
+| `search_memory` | Semantic search with configurable method (`cosine`, `euclidean`, `dts`) and limit |
+| `forget_memory` | Remove a specific memory by ID                                                    |
+| `clear_memory`  | Clear all memories for the session                                                |
 
 ## License
 

@@ -30,21 +30,22 @@ export class FilesystemVectorStore extends MemoryVectorStore {
   }
 
   async add(
+    sessionId: string,
     content: string,
     metadata: Record<string, any> = {},
   ): Promise<MemoryItem> {
-    const item = await super.add(content, metadata);
+    const item = await super.add(sessionId, content, metadata);
     await this.save();
     return item;
   }
 
-  async forget(id: string): Promise<void> {
-    await super.forget(id);
+  async forget(sessionId: string, id: string): Promise<void> {
+    await super.forget(sessionId, id);
     await this.save();
   }
 
-  async clear(): Promise<void> {
-    await super.clear();
+  async clear(sessionId: string): Promise<void> {
+    await super.clear(sessionId);
     await this.save();
   }
 }

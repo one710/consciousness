@@ -37,6 +37,7 @@ export class MemoryVectorStore implements VectorStore {
   }
 
   async add(
+    sessionId: string,
     content: string,
     metadata: Record<string, any> = {},
   ): Promise<MemoryItem> {
@@ -45,6 +46,7 @@ export class MemoryVectorStore implements VectorStore {
 
     const item: MemoryItem = {
       id,
+      sessionId,
       content,
       embedding,
       metadata,
@@ -61,15 +63,19 @@ export class MemoryVectorStore implements VectorStore {
   }
 
   async search(
+    sessionId: string,
     query: string,
     options: SearchOptions = { method: "cosine", limit: 5 },
   ): Promise<SearchResult[]> {
     const queryEmbedding = await this.embeddingProvider.getEmbedding(query);
+    const sessionItems = this.items.filter(
+      (item) => item.sessionId === sessionId,
+    );
     let results: SearchResult[] = [];
 
     if (options.method === "dts" && this.samplesInitialized) {
       const queryDtsIndex = this.dts.calculateIndex(queryEmbedding);
-      results = this.items.map((item) => {
+      results = sessionItems.map((item) => {
         if (!item.dtsIndex) return { item, score: Infinity };
         let profileDiff = 0;
         for (let i = 0; i < queryDtsIndex.length; i++) {
@@ -80,7 +86,7 @@ export class MemoryVectorStore implements VectorStore {
       });
       results.sort((a, b) => a.score - b.score);
     } else {
-      results = this.items.map((item) => {
+      results = sessionItems.map((item) => {
         let score = 0;
         if (
           options.method === "euclidean" ||
@@ -111,13 +117,17 @@ export class MemoryVectorStore implements VectorStore {
       .slice(0, options.limit || 5);
   }
 
-  async clear(): Promise<void> {
-    this.items = [];
-    this.samplesInitialized = false;
+  async clear(sessionId: string): Promise<void> {
+    this.items = this.items.filter((item) => item.sessionId !== sessionId);
+    if (this.items.length < 5) {
+      this.samplesInitialized = false;
+    }
   }
 
-  async forget(id: string): Promise<void> {
-    this.items = this.items.filter((item) => item.id !== id);
+  async forget(sessionId: string, id: string): Promise<void> {
+    this.items = this.items.filter(
+      (item) => !(item.sessionId === sessionId && item.id === id),
+    );
     if (this.items.length < 5) {
       this.samplesInitialized = false;
     }

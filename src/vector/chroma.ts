@@ -61,6 +61,7 @@ export class ChromaVectorStore implements VectorStore {
   }
 
   async add(
+    sessionId: string,
     content: string,
     metadata: Record<string, any> = {},
   ): Promise<MemoryItem> {
@@ -71,8 +72,7 @@ export class ChromaVectorStore implements VectorStore {
     await this.collection!.add({
       ids: [id],
       documents: [content],
-      metadatas:
-        metadata && Object.keys(metadata).length > 0 ? [metadata] : undefined,
+      metadatas: [{ ...metadata, sessionId }],
     });
 
     // We still need the embedding for the return value, so we'll fetch it from the collection or provider
@@ -81,6 +81,7 @@ export class ChromaVectorStore implements VectorStore {
 
     return {
       id,
+      sessionId,
       content,
       embedding,
       metadata,
@@ -88,6 +89,7 @@ export class ChromaVectorStore implements VectorStore {
   }
 
   async search(
+    sessionId: string,
     query: string,
     options: SearchOptions = { method: "cosine", limit: 5 },
   ): Promise<SearchResult[]> {
@@ -96,6 +98,7 @@ export class ChromaVectorStore implements VectorStore {
     const results = await this.collection!.query({
       queryTexts: [query],
       nResults: options.limit || 5,
+      where: { sessionId },
       // We manually cast because the library types can be restrictive
       include: ["documents", "metadatas", "embeddings", "distances"] as any,
     });
@@ -103,13 +106,17 @@ export class ChromaVectorStore implements VectorStore {
     const searchResults: SearchResult[] = [];
     if (results.ids[0]) {
       for (let i = 0; i < results.ids[0].length; i++) {
+        const chromaMetadata = results.metadatas[0][i] as Record<string, any>;
+        // Strip sessionId from metadata returned to callers
+        const { sessionId: _sid, ...userMetadata } = chromaMetadata || {};
         const item: MemoryItem = {
           id: results.ids[0][i],
+          sessionId,
           content: results.documents[0][i]!,
           embedding: results.embeddings
             ? (results.embeddings[0][i] as any)
             : [],
-          metadata: results.metadatas[0][i] as Record<string, any>,
+          metadata: userMetadata,
         };
         searchResults.push({
           item,
@@ -122,14 +129,14 @@ export class ChromaVectorStore implements VectorStore {
     return searchResults;
   }
 
-  async forget(id: string): Promise<void> {
+  async forget(sessionId: string, id: string): Promise<void> {
     if (!this.collection) await this.initialize();
     await this.collection!.delete({ ids: [id] });
   }
 
-  async clear(): Promise<void> {
+  async clear(sessionId: string): Promise<void> {
     if (!this.collection) await this.initialize();
-    await this.client.deleteCollection({ name: this.collectionName });
-    await this.initialize();
+    // Delete only items belonging to this session
+    await this.collection!.delete({ where: { sessionId } });
   }
 }

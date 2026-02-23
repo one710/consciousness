@@ -17,6 +17,8 @@ describe("MCP Server Integration", function () {
   let clientTransport: InMemoryTransport;
   let store: MemoryVectorStore;
 
+  const SESSION = "test-session";
+
   beforeEach(async () => {
     // Setup Memory Store and Provider
     const provider = new HFEmbeddingProvider();
@@ -58,6 +60,7 @@ describe("MCP Server Integration", function () {
       {
         name: "add_to_memory",
         arguments: {
+          sessionId: SESSION,
           content: "The cat is sleeping on the mat",
           metadata: { category: "pets" },
         },
@@ -70,6 +73,7 @@ describe("MCP Server Integration", function () {
       {
         name: "search_memory",
         arguments: {
+          sessionId: SESSION,
           query: "feline animals",
           method: "cosine",
           limit: 1,
@@ -94,7 +98,7 @@ describe("MCP Server Integration", function () {
     const addResult = (await serverClient.callTool(
       {
         name: "add_to_memory",
-        arguments: { content: "temporary memory" },
+        arguments: { sessionId: SESSION, content: "temporary memory" },
       },
       CallToolResultSchema,
     )) as CallToolResult;
@@ -115,7 +119,7 @@ describe("MCP Server Integration", function () {
     await serverClient.callTool(
       {
         name: "forget_memory",
-        arguments: { id },
+        arguments: { sessionId: SESSION, id },
       },
       CallToolResultSchema,
     );
@@ -124,7 +128,7 @@ describe("MCP Server Integration", function () {
     const searchResult = (await serverClient.callTool(
       {
         name: "search_memory",
-        arguments: { query: "temporary" },
+        arguments: { sessionId: SESSION, query: "temporary" },
       },
       CallToolResultSchema,
     )) as CallToolResult;
@@ -141,17 +145,23 @@ describe("MCP Server Integration", function () {
     await serverClient.callTool(
       {
         name: "add_to_memory",
-        arguments: { content: "memory 1" },
+        arguments: { sessionId: SESSION, content: "memory 1" },
       },
       CallToolResultSchema,
     );
 
-    await serverClient.callTool({ name: "clear_memory" }, CallToolResultSchema);
+    await serverClient.callTool(
+      {
+        name: "clear_memory",
+        arguments: { sessionId: SESSION },
+      },
+      CallToolResultSchema,
+    );
 
     const result = (await serverClient.callTool(
       {
         name: "search_memory",
-        arguments: { query: "memory" },
+        arguments: { sessionId: SESSION, query: "memory" },
       },
       CallToolResultSchema,
     )) as CallToolResult;

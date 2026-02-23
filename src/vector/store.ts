@@ -2,6 +2,7 @@ import { Embedding } from "../embeddings/provider.js";
 
 export interface MemoryItem {
   id: string;
+  sessionId: string;
   content: string;
   embedding: Embedding;
   metadata?: Record<string, any>;
@@ -20,9 +21,17 @@ export interface SearchOptions {
 }
 
 export interface VectorStore {
-  add(content: string, metadata?: Record<string, any>): Promise<MemoryItem>;
-  search(query: string, options?: SearchOptions): Promise<SearchResult[]>;
-  forget(id: string): Promise<void>;
-  clear(): Promise<void>;
+  add(
+    sessionId: string,
+    content: string,
+    metadata?: Record<string, any>,
+  ): Promise<MemoryItem>;
+  search(
+    sessionId: string,
+    query: string,
+    options?: SearchOptions,
+  ): Promise<SearchResult[]>;
+  forget(sessionId: string, id: string): Promise<void>;
+  clear(sessionId: string): Promise<void>;
   initialize?(): Promise<void>;
 }
