@@ -10,7 +10,7 @@ A powerful, pluggable vector memory and Model Context Protocol (MCP) server for 
 ## Features
 
 - **MCP Integration**: Fully compatible with the Model Context Protocol.
-- **Session-Scoped Memory**: All operations require a `sessionId`, enabling isolated memory per session.
+- **Session-Scoped & Universal Memory**: Scoped tools isolate memory per `sessionId`; universal tools provide shared, session-independent storage.
 - **Pluggable Architecture**: Easily swap embedding providers and vector stores.
 - **Multiple Storage Backends**: Supports Memory, Filesystem, and ChromaDB stores out of the box.
 - **Semantic Search**: Use state-of-the-art embeddings for intelligent memory retrieval.
@@ -127,14 +127,25 @@ await store.clear(sessionId);
 
 ### MCP Tools
 
-The MCP server exposes four tools, all requiring a `sessionId`:
+The MCP server exposes two sets of tools:
 
-| Tool            | Description                                                                       |
-| --------------- | --------------------------------------------------------------------------------- |
-| `add_to_memory` | Store content with an optional metadata object                                    |
-| `search_memory` | Semantic search with configurable method (`cosine`, `euclidean`, `dts`) and limit |
-| `forget_memory` | Remove a specific memory by ID                                                    |
-| `clear_memory`  | Clear all memories for the session                                                |
+#### Scoped Tools (require `sessionId`)
+
+| Tool                   | Description                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `add_to_scoped_memory` | Store content scoped to a session                               |
+| `search_scoped_memory` | Semantic search within a session (`cosine`, `euclidean`, `dts`) |
+| `forget_scoped_memory` | Remove a specific memory by ID within a session                 |
+| `clear_scoped_memory`  | Clear all memories for a session                                |
+
+#### Universal Tools (no `sessionId` needed)
+
+| Tool                      | Description                                                            |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `add_to_universal_memory` | Store content in shared, session-independent memory                    |
+| `search_universal_memory` | Semantic search across universal memory (`cosine`, `euclidean`, `dts`) |
+| `forget_universal_memory` | Remove a specific memory by ID from universal memory                   |
+| `clear_universal_memory`  | Clear all universal memories                                           |
 
 ## License
 
