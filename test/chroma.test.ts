@@ -9,6 +9,7 @@ describe("ChromaVectorStore", function () {
   let client: ChromaClient;
   let store: ChromaVectorStore;
   const collectionName = "test-comp-collection";
+  const SESSION = "test-session";
 
   beforeEach(async () => {
     client = new ChromaClient();
@@ -29,38 +30,46 @@ describe("ChromaVectorStore", function () {
   });
 
   it("should add and search items", async () => {
-    const item = await store.add("the cat", { tag: "test" });
+    const item = await store.add(SESSION, "the cat", { tag: "test" });
 
     expect(item.content).to.equal("the cat");
+    expect(item.sessionId).to.equal(SESSION);
     expect(item.embedding).to.have.lengthOf(384);
 
-    const results = await store.search("cat", { method: "cosine", limit: 1 });
+    const results = await store.search(SESSION, "cat", { method: "cosine", limit: 1 });
     expect(results).to.have.lengthOf(1);
     expect(results[0].item.content).to.equal("the cat");
+    expect(results[0].item.sessionId).to.equal(SESSION);
   });
 
   it("should respect limit", async () => {
-    await store.add("item 1");
-    await store.add("item 2");
-    await store.add("item 3");
+    await store.add(SESSION, "item 1");
+    await store.add(SESSION, "item 2");
+    await store.add(SESSION, "item 3");
 
-    const results = await store.search("query", { method: "cosine", limit: 2 });
+    const results = await store.search(SESSION, "query", { method: "cosine", limit: 2 });
     expect(results).to.have.lengthOf(2);
   });
 
   it("should forget an item", async () => {
-    const item = await store.add("to be forgotten");
-    await store.forget(item.id);
+    const item = await store.add(SESSION, "to be forgotten");
+    await store.forget(SESSION, item.id);
 
-    const results = await store.search("forgotten");
+    const results = await store.search(SESSION, "forgotten");
     expect(results.some((r) => r.item.id === item.id)).to.be.false;
   });
 
-  it("should clear all items", async () => {
-    await store.add("test item");
-    await store.clear();
+  it("should clear items in session", async () => {
+    await store.add(SESSION, "test item");
+    await store.add("other-session", "other item");
 
-    const results = await store.search("test");
+    await store.clear(SESSION);
+
+    const results = await store.search(SESSION, "test");
     expect(results).to.have.lengthOf(0);
+
+    const otherResults = await store.search("other-session", "other");
+    expect(otherResults).to.have.lengthOf(1);
+    expect(otherResults[0].item.content).to.equal("other item");
   });
 });
