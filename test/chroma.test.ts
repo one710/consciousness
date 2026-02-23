@@ -36,7 +36,10 @@ describe("ChromaVectorStore", function () {
     expect(item.sessionId).to.equal(SESSION);
     expect(item.embedding).to.have.lengthOf(384);
 
-    const results = await store.search(SESSION, "cat", { method: "cosine", limit: 1 });
+    const results = await store.search(SESSION, "cat", {
+      method: "cosine",
+      limit: 1,
+    });
     expect(results).to.have.lengthOf(1);
     expect(results[0].item.content).to.equal("the cat");
     expect(results[0].item.sessionId).to.equal(SESSION);
@@ -47,7 +50,10 @@ describe("ChromaVectorStore", function () {
     await store.add(SESSION, "item 2");
     await store.add(SESSION, "item 3");
 
-    const results = await store.search(SESSION, "query", { method: "cosine", limit: 2 });
+    const results = await store.search(SESSION, "query", {
+      method: "cosine",
+      limit: 2,
+    });
     expect(results).to.have.lengthOf(2);
   });
 
