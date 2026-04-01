@@ -12,16 +12,51 @@ permissions:
   id-token: write # Required for OIDC
   contents: read
 
+# Local Supabase-compatible API needs Postgres (mounted migrations), PostgREST, and nginx
+# for the /rest/v1 prefix. GHA `services:` cannot mount repo files or order dependent
+# containers, so we use the same Docker Compose stack as `yarn docker:test:up`.
+env:
+  SUPABASE_URL: http://127.0.0.1:54331
+  SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    services:
-      chroma:
-        image: chromadb/chroma
-        ports:
-          - 8000:8000
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start Chroma and Supabase test stack
+        run: docker compose -f docker-compose.test.yml up -d
+
+      - name: Wait for Chroma and Supabase gateway
+        run: |
+          set -e
+          for i in $(seq 1 90); do
+            if curl -sf "http://127.0.0.1:8000/api/v2/heartbeat" >/dev/null 2>&1; then
+              echo "Chroma ready"
+              break
+            fi
+            if [ "$i" -eq 90 ]; then
+              echo "Chroma failed to become ready"
+              docker compose -f docker-compose.test.yml logs chroma
+              exit 1
+            fi
+            sleep 2
+          done
+          for i in $(seq 1 90); do
+            if curl -sf "http://127.0.0.1:54331/rest/v1/consciousness_memory?select=id&limit=1" \
+                -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+                -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" >/dev/null 2>&1; then
+              echo "Supabase REST gateway ready"
+              exit 0
+            fi
+            if [ "$i" -eq 90 ]; then
+              echo "Supabase gateway failed to become ready"
+              docker compose -f docker-compose.test.yml logs
+              exit 1
+            fi
+            sleep 2
+          done
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -37,6 +72,10 @@ jobs:
 
       - name: Run Tests
         run: npm test
+
+      - name: Stop test stack
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v
 
       - name: Publish
         if: startsWith(github.ref, 'refs/tags/v')

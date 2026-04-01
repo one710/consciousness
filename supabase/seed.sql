@@ -1,0 +1,1 @@
+-- Optional seed data for local Supabase; empty by default.

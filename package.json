@@ -1,6 +1,6 @@
 {
   "name": "@one710/consciousness",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "A powerful, pluggable vector memory and MCP server for semantic search.",
   "license": "MIT",
   "author": "Vaibhav Pandey <contact@vaibhavpandey.com>",
@@ -19,6 +19,22 @@
     ".": {
       "types": "./dist/lib.d.ts",
       "import": "./dist/lib.js"
+    },
+    "./chroma": {
+      "types": "./dist/chroma.d.ts",
+      "import": "./dist/chroma.js"
+    },
+    "./supabase": {
+      "types": "./dist/supabase.d.ts",
+      "import": "./dist/supabase.js"
+    },
+    "./huggingface": {
+      "types": "./dist/huggingface.d.ts",
+      "import": "./dist/huggingface.js"
+    },
+    "./aisdk": {
+      "types": "./dist/aisdk.d.ts",
+      "import": "./dist/aisdk.js"
     }
   },
   "bin": {
@@ -26,6 +42,13 @@
   },
   "scripts": {
     "test": "mocha --node-option import=tsx test/**/*.test.ts",
+    "test:supabase": "mocha --node-option import=tsx test/supabase-vector-store.test.ts",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:status": "npx supabase status",
+    "docker:test:up": "docker compose -f docker-compose.test.yml up -d",
+    "docker:test:down": "docker compose -f docker-compose.test.yml down -v",
+    "docker:test": "SUPABASE_URL=http://127.0.0.1:54331 yarn test",
     "build": "tsc"
   },
   "dependencies": {
@@ -35,6 +58,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.101.1",
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.3.0",
